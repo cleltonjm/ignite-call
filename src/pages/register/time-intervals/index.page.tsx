@@ -2,7 +2,7 @@ import { Button, Checkbox, Heading, MultiStep, Text, TextInput } from '@ignite-u
 import { Container, Header } from '../styles'
 import { IntervalBox, IntervalDay, IntervalInputs, IntervalItem, IntervalContainer } from './styles'
 import { ArrowRight } from 'phosphor-react'
-import { useFieldArray, useForm } from 'react-hook-form'
+import { Controller, useFieldArray, useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { getWeekDays } from '@/utils/get-week-days'
 
@@ -11,7 +11,7 @@ const timeIntervalsFormSchema = z.object({
 })
 
 export default function TimeIntervals() {
-    const { register, handleSubmit, control, formState: {isSubmitting, errors }} = useForm({
+    const { register, handleSubmit, control, watch, formState: {isSubmitting, errors }} = useForm({
         defaultValues: {
             intervals: [
                 { weekDay: 0, enabled: false, startTime: '08:00', endTime: '18:00' },
@@ -31,6 +31,8 @@ export default function TimeIntervals() {
         control,
         name: 'intervals',
     })
+
+    const intervals = watch('intervals')
 
     async function handleSetTimeIntervals() {
 
@@ -53,7 +55,20 @@ export default function TimeIntervals() {
                     return (
                         <IntervalItem key={field.id}>
                             <IntervalDay>
-                                <Checkbox />
+                            <Controller
+                                name={`intervals.${index}.enabled`}
+                                control={control}
+                                render={({ field }) => {
+                                return (
+                                    <Checkbox
+                                    onCheckedChange={(checked: boolean) =>
+                                        field.onChange(checked === true)
+                                    }
+                                    checked={field.value}
+                                    />
+                                )
+                                }}
+                            />
                                 <Text>{weekDays[field.weekDay]}</Text>
                             </IntervalDay>
                             <IntervalInputs>
@@ -61,12 +76,14 @@ export default function TimeIntervals() {
                                     size="sms"
                                     type="time"
                                     step={60}
+                                    disabled={intervals[index].enabled === false}
                                     {...register(`intervals.${index}.startTime`)}
                                 />
                                 <TextInput 
                                     size="sms"
                                     type="time"
                                     step={60}
+                                    disabled={intervals[index].enabled === false}
                                     {...register(`intervals.${index}.endTime`)}
                                 />
                             </IntervalInputs>
